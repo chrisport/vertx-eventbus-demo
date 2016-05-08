@@ -1,11 +1,12 @@
 package customer;
 
 import common.Customer;
+import common.DateUtil;
 import common.SyncMessage;
 import io.vertx.core.eventbus.DeliveryOptions;
 import io.vertx.core.eventbus.EventBus;
+import lombok.extern.slf4j.Slf4j;
 
-import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -14,10 +15,11 @@ import java.util.concurrent.atomic.AtomicLong;
 
 /**
  * Created by ugur on 14.01.2016.
- * <p/>
+ * <p>
  * Contributor:
  * Christoph Portmann
  */
+@Slf4j
 public class CustomerService {
 
     private final Map<Long, Customer> customerStore = Collections.synchronizedMap(new HashMap<>());
@@ -51,7 +53,7 @@ public class CustomerService {
         Customer createdCustomer = new Customer(idGenerator.getAndIncrement(), customer);
         customerStore.put(createdCustomer.getId(), createdCustomer);
         publish(Customer.EVENT_CREATED, createdCustomer);
-        System.out.println(customerStore.size() + "   # " + LocalDateTime.now().toString() + "  ADDED  " + createdCustomer.getId());
+        log.info(customerStore.size() + "   # " + DateUtil.timeNowFormatted() + "  ADDED    #" + createdCustomer.getId());
         return new Customer(createdCustomer);
     }
 
@@ -59,13 +61,13 @@ public class CustomerService {
         Customer deletedCustomer = customerStore.remove(id);
         if (deletedCustomer != null) {
             publish(Customer.EVENT_DELETED, deletedCustomer);
-            System.out.println(customerStore.size() + "   # " + LocalDateTime.now().toString() + "  DELETED    " + id);
+            log.info(customerStore.size() + "   # " + DateUtil.timeNowFormatted() + "  DELETED  #" + id);
         }
         return deletedCustomer;
     }
 
     private void publish(String event, Customer customer) {
-        eventBus.publish(event, Customer.fromCustomer(customer), generateTimestampedDeliverOptions());
+        eventBus.publish(event, customer.toString(), generateTimestampedDeliverOptions());
     }
 
 }
